@@ -1,16 +1,20 @@
-import mongoose from 'mongoose';
+import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import path  from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config();
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
-export const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI!);
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`❌ MongoDB connection error: ${(error as Error).message}`);
-    process.exit(1);
-  }
-};
+pool.on('connect', () => {
+  console.log(' Database connected successfully');
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected database error:', err);
+  process.exit(-1);
+});
+
+export default pool;
